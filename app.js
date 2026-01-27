@@ -1,29 +1,9 @@
 const express= require('express');
-const path= require('path');
-const {products,people}=require('./data.js');
 const app= express();
+const {products,people}=require('./data.js');
 
-app.get('/',(req,res)=>{
-    res.sendFile(path.resolve(__dirname,'./abc/index.html'))
-})
-
-app.get('/api/products',(req,res)=>{
-    res.json(products)
-})
-
-app.get('/api/products/:productID',(req,res)=>{
-    const {productID} = req.params
-    const single=products.find((product)=>product.id===Number(productID))
-    if(!single){return res.status(404).send('Product does not exist')}
-    res.json(single)
-})
-
-app.get('/api/people',(req,res)=>{
-    res.json(people)
-})
-
-app.use((req,res)=>{
-    res.send('<h1>PAGE NOT FOUND</h1>')
+app.get('/people',(req,res)=>{
+    res.status(200).json({success:true,data:people})
 })
 
 app.listen(5000,()=>{
