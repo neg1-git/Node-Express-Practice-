@@ -1,46 +1,62 @@
-const {tasks}=require('../data')
+const db = require('../db');
 
-const getAllTasks=(req,res)=>{
+const getAllTasks=async(req,res)=>{
 
-  if(!tasks){
-    return res.status(400).json({success:false, msg:'no task found'});
+try {
+    const result = await db.query('SELECT * FROM tasks');    
+    res.status(200).json({ success: true, data: result.rows });
+    } catch (error) {
+    res.status(500).json({ msg: 'Something went wrong' });
   }
-
-  return res.status(200).json({success:true,data:tasks});
 }
 
-const singleTask=(req,res)=>{
-  const {id}= req.params;
+const singleTask = async (req, res) => {
+  const { id } = req.params;
 
-  const single=tasks.filter((task)=>task.id===Number(id));
+  try {
+    const result = await db.query('SELECT * FROM tasks WHERE id = $1', [id]);
 
-  if(!single){
-    return res.status(400).json({success:false,msg:'id doesnt exist'})
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, msg: `No task with id: ${id}` });
+    }
+
+    return res.status(200).json({ success: true, data: result.rows[0] });
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ msg: 'Something went wrong' });
   }
-
-  return res.status(200).json({success:true,data:single})
 }
 
-const createTask=(req,res)=>{
-  const task = req.body;
+const createTask=async(req,res)=>{
+  const {name} = req.body;
 
-  if(!task){
+  if(!name){
     return res.status(400).json({success:false,msg:"write a task"})
   }
 
-  return res.status(200).json({success:true,data:task})
+  try {
+    const result= await db.query('INSERT INTO tasks (name) VALUES ($1) RETURNING *', 
+      [name])
+    return res.status(200).json({success:true,data: result.rows[0]})
+  } catch (error) {
+    return res.status(500).json({ msg: 'Something went wrong' });
+  }
 }
 
 const deleteTask= (req,res)=>{
   const {id} = req.params;
 
-  const idCheck=tasks.find((task)=> task.id===Number(id))
-  if(!idCheck){
-    return res.status(400).json({success:false,msg:'id not there'})
+  try {
+    const result = db.query(' Delete from tasks where id=($1)',[id])
+    if (result.rowCount === 0) {
+      return res.status(404).json({ success: false, msg: `No task with id: ${id}` });
+    }
+    return res.status(200).json({ success: true, msg: 'Task deleted successfully' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ msg: 'Something went wrong' });
   }
-
-  const newTasks= tasks.filter((task)=>task.id!==Number(id))
-  return res.status(200).json({success:true,data:newTasks})
 
 }
 
